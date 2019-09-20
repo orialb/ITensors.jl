@@ -144,71 +144,69 @@ function svd(A::ITensor,
              Linds...;
              kwargs...)
   A,Lis,Ris = _permute_for_factorize(A,Linds...)
-  Uis,Ustore,Sis,Sstore,Vis,Vstore = storage_svd(store(A),Lis,Ris;kwargs...)
+  Uis,Ustore,Sis,Sstore,Vis,Vstore,truncerr = storage_svd(store(A),Lis,Ris;kwargs...)
 
   U = ITensor(Uis,Ustore)
   S = ITensor(Sis,Sstore)
   V = ITensor(Vis,Vstore)
   u = commonindex(U,S)
   v = commonindex(S,V)
-  return U,S,V,u,v
+  return U,S,V,u,v,truncerr
 end
 
 function _factorize_center(A::ITensor,
                            Linds...;
                            kwargs...)
   tags::TagSet = get(kwargs,:tags,"Link,u")
-  U,S,V = svd(A,Linds...;kwargs...)
-  u = commonindex(U,S)
-  v = commonindex(S,V)
+  U,S,V,u,v,truncerr = svd(A,Linds...;kwargs...)
   for ss = 1:dim(u)
     S[ss,ss] = sqrt(S[ss,ss])
   end
   FU = settags(U*S,tags,v)
   FV = settags(S*V,tags,u)
-  return FU,FV,commonindex(FU,FV)
+  return FU,FV,commonindex(FU,FV),truncerr
 end
 
 function _factorize_from_left_svd(A::ITensor,
                                   Linds...;
                                   kwargs...)
   tags::TagSet = get(kwargs,:tags,"Link,u")
-  U,S,V = svd(A,Linds...;kwargs...)
+  U,S,V,u,_,truncerr = svd(A,Linds...;kwargs...)
   u = commonindex(U,S)
   FU = settags(U,tags,u)
   FV = settags(S*V,tags,u)
-  return FU,FV,commonindex(FU,FV)
+  return FU,FV,commonindex(FU,FV),truncerr
 end
 
 function _factorize_from_right_svd(A::ITensor,
-                                   Linds...; 
+                                   Linds...;
                                    kwargs...)
   tags::TagSet = get(kwargs,:tags,"Link,u")
-  U,S,V = svd(A,Linds...;kwargs...)
+  U,S,V,_,v,truncerr = svd(A,Linds...;kwargs...)
   v = commonindex(S,V)
   FU = settags(U*S,tags,v)
   FV = settags(V,tags,v)
-  return FU,FV,commonindex(FU,FV)
+  return FU,FV,commonindex(FU,FV),truncerr
 end
 
 function _factorize_from_left_eigen(A::ITensor,
-                                    Linds...; 
+                                    Linds...;
                                     kwargs...)
   A,Lis,Ris = _permute_for_factorize(A,Linds...)
   A²    = A*prime(dag(A),Lis)
-  FU, D = eigen(A²,Lis,prime(Lis); kwargs...)
+  FU, D, truncerr = eigen(A²,Lis,prime(Lis); kwargs...)
   FV    = dag(FU)*A
-  return FU,FV,commonindex(FU,FV)
+  return FU,FV,commonindex(FU,FV), truncerr
 end
 
 function _factorize_from_right_eigen(A::ITensor,
-                                     Linds...; 
+                                     Linds...;
                                      kwargs...)
   A,Lis,Ris = _permute_for_factorize(A,Linds...)
   A²   = A*prime(dag(A),Ris)
-  FV,D = eigen(A²,Ris,prime(Ris); kwargs...)
+  FV,D, truncerr = eigen(A²,Ris,prime(Ris); kwargs...)
   FU   = A*dag(FV)
-  return FU,FV,commonindex(FU,FV)
+  return FU,FV,commonindex(FU,FV), truncerr
 end
 
 import LinearAlgebra.factorize
@@ -261,9 +259,9 @@ function eigen(A::ITensor,
     A = permute(A,Ais_perm)
   end
   #TODO: More of the index analysis should be moved out of storage_eigen
-  Uis,Ustore,Dis,Dstore = storage_eigen(store(A),Lis,Ris; kwargs...)
+  Uis,Ustore,Dis,Dstore, truncerr = storage_eigen(store(A),Lis,Ris; kwargs...)
   U = ITensor(Uis,Ustore)
   D = ITensor(Dis,Dstore)
-  return U,D,commonindex(U,D)
+  return U,D,commonindex(U,D), truncerr
 end
 

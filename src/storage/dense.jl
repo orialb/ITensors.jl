@@ -257,11 +257,11 @@ function storage_svd(Astore::Dense{T},
 
   P = MS.^2
   #@printf "  Truncating with maxdim=%d cutoff=%.3E\n" maxdim cutoff
-  truncate!(P;mindim=mindim,
-              maxdim=maxdim,
-              cutoff=cutoff,
-              absoluteCutoff=absoluteCutoff,
-              doRelCutoff=doRelCutoff)
+  truncerr,_ = truncate!(P;mindim=mindim,
+                         maxdim=maxdim,
+                         cutoff=cutoff,
+                         absoluteCutoff=absoluteCutoff,
+                         doRelCutoff=doRelCutoff)
   dS = length(P)
   if dS < length(MS)
     MU = MU[:,1:dS]
@@ -276,7 +276,7 @@ function storage_svd(Astore::Dense{T},
   Sis,Sstore = IndexSet(u,v),Diag{Vector{Float64}}(MS)
   Vis,Vstore = IndexSet(Ris...,v),Dense{T}(Vector{T}(vec(MV)))
 
-  return (Uis,Ustore,Sis,Sstore,Vis,Vstore)
+  return (Uis,Ustore,Sis,Sstore,Vis,Vstore,truncerr)
 end
 
 function storage_eigen(Astore::Dense{T},
@@ -302,10 +302,10 @@ function storage_eigen(Astore::Dense{T},
   MU = MU[:,p]
 
   #@printf "  Truncating with maxdim=%d cutoff=%.3E\n" maxdim cutoff
-  truncate!(MD;maxdim=maxdim,
-              cutoff=cutoff,
-              absoluteCutoff=absoluteCutoff,
-              doRelCutoff=doRelCutoff)
+  truncerr,_ = truncate!(MD;maxdim=maxdim,
+                         cutoff=cutoff,
+                         absoluteCutoff=absoluteCutoff,
+                         doRelCutoff=doRelCutoff)
   dD = length(MD)
   if dD < size(MU,2)
     MU = MU[:,1:dD]
@@ -316,7 +316,7 @@ function storage_eigen(Astore::Dense{T},
   v = settags(u,righttags)
   Uis,Ustore = IndexSet(Lis...,u),Dense{T}(vec(MU))
   Dis,Dstore = IndexSet(u,v),Diag{Vector{Float64}}(MD)
-  return (Uis,Ustore,Dis,Dstore)
+  return (Uis,Ustore,Dis,Dstore, truncerr)
 end
 
 # TODO: move this to a general "linear_algebra.jl" file?

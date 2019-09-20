@@ -178,7 +178,7 @@ function replaceBond!(M::MPS,
                       b::Int,
                       phi::ITensor;
                       kwargs...)
-  FU,FV = factorize(phi,inds(M[b]); which_factorization="automatic",
+  FU,FV,_,truncerr = factorize(phi,inds(M[b]); which_factorization="automatic",
                         tags=tags(linkindex(M,b)), kwargs...)
   M[b]   = FU
   M[b+1] = FV
@@ -191,6 +191,7 @@ function replaceBond!(M::MPS,
     M.llim_ == b-1 && (M.llim_ += 1)
     M.rlim_ == b+1 && (M.rlim_ += 1)
   end
+  return truncerr
 end
 
 
