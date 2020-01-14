@@ -12,7 +12,7 @@ let
   # Create N spin-one degrees of freedom
   sites = siteinds("S=1",N)
   # Alternatively can make spin-half sites instead
-  #sites = siteinds("S=1/2",N)
+  # sites = siteinds("S=1/2",N)
 
   # Input operator terms which define a Hamiltonian
   ampo = AutoMPO()
@@ -31,6 +31,7 @@ let
   sweeps = Sweeps(5)
   # Set maximum MPS bond dimensions for each sweep
   maxdim!(sweeps, 10,20,100,100,200)
+
   # Set maximum truncation error allowed when adapting bond dimensions
   cutoff!(sweeps, 1E-10)
   @show sweeps
@@ -39,3 +40,6 @@ let
   energy, psi = dmrg(H,psi0, sweeps)
   @printf("Final energy = %.12f\n",energy)
 end
+
+# This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl
+
